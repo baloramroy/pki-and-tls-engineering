@@ -103,7 +103,7 @@ TLS does NOT replace networking.
 
 TLS secures communication already **established over TCP/IP**.
 
-Correct dependency chain:
+**Correct dependency chain:**
 
 ```text
 DNS
@@ -139,6 +139,8 @@ Nearly all modern infrastructure uses this model, including:
 - Kubernetes applications
 - banking platforms
 
+#
+
 ### Client Definition
 
 A client is a system, application, or process that initiates communication and requests resources or services.
@@ -153,6 +155,8 @@ A client is a system, application, or process that initiates communication and r
 | Monitoring Agent | Zabbix Agent        |
 | Mobile App       | Banking Application |
 
+#
+
 ### Server Definition
 
 A server is a system or process that listens for incoming requests and provides services, resources, or responses.
@@ -166,6 +170,8 @@ A server is a system or process that listens for incoming requests and provides 
 | API Server        | Processes API requests      |
 | Mail Server       | Handles email communication |
 | Monitoring Server | Receives monitoring data    |
+
+#
 
 ### Communication Workflow
 
@@ -182,6 +188,8 @@ Client <--- Response --- Server
 Browser ---> HTTP GET ---> NGINX
 Browser <--- HTML ------- NGINX
 ```
+
+#
 
 ### Operational Relevance to SSL/TLS
 
@@ -210,6 +218,8 @@ IP addressing provides:
 
 Without IP addressing, network communication cannot occur.
 
+#
+
 ### IP Definition
 
 IP stands for:
@@ -220,31 +230,36 @@ Internet Protocol
 
 An IP address uniquely identifies a device on a network.
 
+#
+
 ### IPv4 Structure
 
-IPv4 uses:
+**IPv4 uses:**
 
 ```text
 32-bit addressing
 ```
 
-Example:
+**Example:**
 
 ```text
 192.168.1.10
 ```
 
-Each octet ranges from:
+**Each octet ranges from:**
 
 ```text
 0–255
 ```
 
+#
+
 ### Types of IP Addresses
 
 **Private IP**
-
+```
 Used internally within private networks.
+```
 
 **Common Ranges**
 
@@ -264,6 +279,8 @@ Public IPs are globally routable internet addresses assigned by:
 - cloud providers
 - hosting providers
 
+#
+
 ### Operational Relevance to TLS
 
 TLS communication ultimately occurs between:
@@ -274,6 +291,8 @@ Client IP <--> Server IP
 
 Even when users use domain names, encrypted traffic still travels between IP endpoints.
 
+#
+
 ### Important Networking Concepts
 
 | Concept        | Description                |
@@ -283,6 +302,7 @@ Even when users use domain names, encrypted traffic still travels between IP end
 | Gateway        | Route to external networks |
 | Routing        | Packet forwarding process  |
 
+#
 
 ### Practical Commands
 
@@ -319,17 +339,19 @@ A port identifies a specific application or service endpoint on a host.
 
 ### Socket Concept
 
-A socket represents:
+**A socket represents:**
 
 ```text
 IP Address + Port
 ```
 
-Example:
+**Example:**
 
 ```text
 192.168.1.10:443
 ```
+
+#
 
 ### Important SSL/TLS Related Ports
 
@@ -342,15 +364,17 @@ Example:
 | 9093 | Kafka SSL     | TLS-enabled Kafka          |
 | 9200 | Elasticsearch | Often TLS-enabled          |
 
+#
+
 ### HTTPS Default Port Behavior
 
-When a browser sees:
+**When a browser sees:**
 
 ```text
 https://example.com
 ```
 
-it automatically assumes:
+**It automatically assumes:**
 
 ```text
 example.com:443
@@ -359,17 +383,21 @@ example.com:443
 >[!NOTE]
 unless another port is explicitly specified.
 
+#
+
 ### Operational Relevance to TLS
 
 TLS listeners bind to specific ports.
 
-Example:
+**Example:**
 
 ```text
 NGINX HTTPS listener → 443
 Kubernetes API → 6443
 Kafka SSL listener → 9093
 ```
+
+#
 
 ### Practical Commands
 
@@ -411,6 +439,8 @@ Domain Name System
 
 >[!important]DNS translates domain names into IP addresses.
 
+#
+
 ### DNS Resolution Workflow
 
 **Resolution Sequence**
@@ -433,6 +463,8 @@ Authoritative Server
 IP Returned
 ```
 
+#
+
 ### Important DNS Record Types
 
 | Record | Purpose                    |
@@ -443,23 +475,27 @@ IP Returned
 | MX     | Mail routing               |
 | TXT    | Verification/security data |
 
+#
+
 ### Operational Relevance to TLS
 
 TLS certificates are typically issued for domain names.
 
-Example:
+**Example:**
 
 ```text
 CN=api.example.com
 ```
 
-NOT:
+**NOT:**
 
 ```text
 CN=192.168.1.10
 ```
 
 Certificate validation depends heavily on correct DNS resolution.
+
+#
 
 ### Critical Security Relevance
 
@@ -474,6 +510,8 @@ Certificate validation depends heavily on correct DNS resolution.
 | NXDOMAIN              | Domain unreachable           |
 | Expired DNS TTL cache | Stale resolution             |
 | DNS poisoning         | Potential MITM attack        |
+
+#
 
 ### Practical Commands
 
@@ -497,425 +535,5 @@ nslookup google.com
 
 ---
 
-## Topic 5 — TCP Fundamentals
-
-### Concept Overview
-
-- TCP is the foundation of reliable internet communication.
-- HTTPS communication depends entirely on TCP.
-
-### TCP Definition
-
-TCP stands for:
-
-```text
-Transmission Control Protocol
-```
-
->[!important]TCP is a connection-oriented, reliable transport-layer communication protocol.
-
-### Core TCP Guarantees
-
-| Guarantee              | Description                    |
-| ---------------------- | ------------------------------ |
-| Reliable Delivery      | Lost packets retransmitted     |
-| Ordered Delivery       | Packets processed sequentially |
-| Error Detection        | Corrupted packets detected     |
-| Stateful Communication | Connection state maintained    |
-
-### Why TCP Matters for TLS
-
-TLS requires:
-
-- reliable packet delivery
-- ordered packet processing
-- session continuity
-
->[!note]
-Without TCP reliability, TLS record processing would fail.
-
-### TCP vs UDP
-
-| TCP                 | UDP                 |
-| ------------------- | ------------------- |
-| Reliable            | Faster              |
-| Connection-oriented | Connectionless      |
-| Ordered             | Unordered           |
-| Used by HTTPS       | Used heavily by DNS |
-
-### Operational Relevance
-
-Protocols using TLS commonly operate over TCP:
-
-- HTTPS
-- SMTPS
-- IMAPS
-- Kafka SSL
-- LDAPS
-- Elasticsearch HTTPS
-
-
-### Practical Commands
-
-**View TCP Connections**
-
-```bash
-ss -ant
-```
-
-**Capture TCP Packets**
-
-```bash
-sudo tcpdump -i any tcp
-```
-
----
-
-## Topic 6 — TCP 3-Way Handshake
-
-### Concept Overview
-
-Before data transfer begins, TCP establishes a reliable session between client and server.
-
-This process is called:
-
-```text
-TCP 3-Way Handshake
-```
-
-### Handshake Workflow
-
-- **Step 1 — SYN**
-
-  Client initiates connection request.
-
-- **Step 2 — SYN-ACK**
-
-  Server acknowledges and accepts request.
-
-- **Step 3 — ACK**
-
-  Client confirms acknowledgment.
-
-### Visual Flow
-
-```text
-Client                Server
-  | ---- SYN -------> |
-  | <--- SYN-ACK ---- |
-  | ---- ACK -------> |
-```
-
-### Critical TLS Understanding
-
-TLS handshake begins ONLY AFTER successful TCP connection establishment.
-
-Correct sequence:
-
-```text
-DNS
-↓
-TCP Handshake
-↓
-TLS Handshake
-↓
-Encrypted HTTP Communication
-```
-
-### Practical Labs
-
-**Capture HTTPS Handshake Traffic**
-
-```bash
-sudo tcpdump -i any port 443
-```
-
-Observe:
-
-- SYN
-- SYN-ACK
-- ACK
-
----
-
-## Topic 7 — HTTP Fundamentals
-
-### Concept Overview
-
-```text
-HTTP is the core application-layer protocol used for web communication.
-```
-
-### HTTP Definition
-
-HTTP stands for:
-
-```text
-HyperText Transfer Protocol
-```
-
-HTTP is a **stateless** request-response protocol.
-
-### Default HTTP Port
-
-```text
-80
-```
-
-### HTTP Request Structure
-
-```http
-GET /api/users HTTP/1.1
-Host: example.com
-```
-
-### Important HTTP Characteristics
-
-| Characteristic    | Description             |
-| ----------------- | ----------------------- |
-| Stateless         | Requests independent    |
-| Plaintext         | Data readable           |
-| Application-layer | Top communication layer |
-
-### Why HTTP Is Insecure
-
-HTTP traffic is transmitted without encryption.
-
-Attackers may:
-
-- inspect credentials
-- steal session tokens
-- modify requests
-- intercept data
-
-This led to HTTPS adoption.
-
-
-### Practical Commands
-
-**Inspect HTTP Communication**
-
-```bash
-curl -v http://example.com
-```
-
-**Capture HTTP Packets**
-
-```bash
-sudo tcpdump -i any port 80
-```
-
----
-
-## Topic 8 — HTTPS Fundamentals
-
-### Concept Overview
-
-```text
-HTTPS secures HTTP communication using TLS encryption.
-```
-
-### HTTPS Definition
-
-HTTPS means:
-
-```text
-HTTP over TLS
-```
-
-### Default HTTPS Port
-
-```text
-443
-```
-
-### Core HTTPS Security Properties
-
-| Property        | Purpose                |
-| --------------- | ---------------------- |
-| Confidentiality | Prevent data exposure  |
-| Integrity       | Prevent modification   |
-| Authentication  | Verify server identity |
-
-### HTTPS Communication Stack
-
-```text
-HTTP
-TLS
-TCP
-IP
-```
-
-### Internal HTTPS Workflow
-
-```text
-TCP Handshake
-↓
-TLS Handshake
-↓
-Certificate Validation
-↓
-Encrypted HTTP Communication
-```
-
-### Important TLS Components
-
-| Component     | Purpose               |
-| ------------- | --------------------- |
-| Certificate   | Server identity       |
-| Public Key    | Encryption operations |
-| Private Key   | Decryption/signing    |
-| Cipher Suite  | Encryption algorithms |
-| TLS Handshake | Session establishment |
-
-### Practical Commands
-
-**Inspect HTTPS Communication**
-
-```bash
-curl -v https://example.com
-```
-
-**TLS Inspection Tool**
-
-```bash
-openssl s_client -connect google.com:443
-```
-
-Critical SSL troubleshooting command.
-
----
-
-## Topic 9 — Complete Browser Request Lifecycle
-
-### Scenario
-
-User accesses:
-
-```text
-https://api.example.com/data
-```
-
-### Complete Communication Flow
-
-- **Step 1 — URL Parsing**
-
-    Browser identifies:
-    - HTTPS protocol
-    - destination host
-    - port 443
-
-- **Step 2 — DNS Resolution**
-
-    Domain resolved to IP address.
-
-- **Step 3 — TCP Connection**
-
-    TCP 3-way handshake establishes reliable session.
-
-- **Step 4 — TLS Handshake**
-
-    Browser and server:
-    - negotiate encryption
-    - exchange certificates
-    - establish secure session
-
-- **Step 5 — Encrypted HTTP Request**
-
-    HTTP request encrypted inside **TLS tunnel**.
-
-- **Step 6 — Encrypted HTTP Response**
-
-    Server sends **encrypted response**.
-
-- **Step 7 — Browser Rendering**
-
-    Browser **decrypts and renders** content.
-
-### Complete Layer Flow
-
-```text
-User Types URL
-        ↓
-DNS Resolution
-        ↓
-TCP Handshake
-        ↓
-TLS Handshake
-        ↓
-Certificate Validation
-        ↓
-Encrypted HTTP Request
-        ↓
-Encrypted HTTP Response
-        ↓
-Browser Render
-```
-
----
-
-## Practical Labs
-
-All labs must be completed before progressing to Phase 2.
-
-### DNS Analysis
-
-```bash
-dig +trace google.com
-```
-
-### Port Inspection
-
-```bash
-ss -tulnp
-```
-
-### Connectivity Testing
-
-```bash
-nc -zv google.com 443
-```
-
-### HTTP vs HTTPS Comparison
-
-```bash
-curl -v http://example.com
-curl -v https://example.com
-```
-
-### TCP Packet Capture
-
-```bash
-tcpdump -i any port 443
-```
-
-### TLS Inspection
-
-```bash
-openssl s_client -connect google.com:443
-```
-
----
-
-## Next Phase
-
-### Phase 2 — Security Basics
-
-**Learn:**
-
-- Encryption
-- Decryption
-- Plain text
-- Cipher text
-- Authentication
-- Integrity
-- Confidentiality
-
-**Must Understand**
-
-Difference between:
-
-- Symmetric encryption
-- Asymmetric encryption
-
-> This is the MOST IMPORTANT SSL foundation.
+>[!IMPORTANT] 
+Rest of this topic in at -> [Networking Basics Part 2]()

@@ -396,9 +396,9 @@ TLS then uses symmetric cryptography for fast encrypted communication.
 
 ---
 
-## Recommended Learning Order After This Phase
+## Next Phase
 
-Next recommended topics:
+### Phase 3 — Cryptography Fundamentals
 
 | Topic             | Importance               |
 | ----------------- | ------------------------ |

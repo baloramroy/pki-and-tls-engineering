@@ -240,9 +240,10 @@ Verifies identity
 
 ---
 
-## Recommended Learning Order After This Phase
+## Next Phase
 
-Next recommended topics:
+### Phase 3 — Cryptography Fundamentals
+
 
 | Topic             | Importance               |
 | ----------------- | ------------------------ |
