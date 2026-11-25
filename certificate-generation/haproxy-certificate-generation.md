@@ -24,239 +24,301 @@ The following certificate files must be available:
 - OpenSSL
 - HAProxy
 
+---
+
 ## 3. Procedure
 
 ### Step 1: Create a Working Directory
 
-Create a directory to keep all certificate files together.
+- Create a directory to keep all certificate files together.
 
-```bash
-mkdir -p /tmp/devops/haproxy-ssl
-cd /tmp/devops/haproxy-ssl
-```
+  ```bash
+  mkdir -p /tmp/devops/haproxy-ssl
+  cd /tmp/devops/haproxy-ssl
+  ```
 
 Place all the required certificate files in this directory.
 
+##
+
 ### Step 2: Verify the Certificate Files
 
-Check whether the server certificate is already in PEM format.
+- **Check whether the server certificate is already in PEM format.**
 
-```bash
-head -n 2 STAR_yourdomain_com.crt
-```
+  ```bash
+  head -n 2 STAR_yourdomain_com.crt
+  ```
 
-Expected output:
+  Expected output:
 
-```text
------BEGIN CERTIFICATE-----
-```
+  ```text
+  -----BEGIN CERTIFICATE-----
+  ```
 
-Check the private key:
+- **Check the private key:**
 
-```bash
-head -n 2 yourdomain.key
-```
+  ```bash
+  head -n 2 yourdomain.key
+  ```
 
-The output should start with either:
+  The output should start with either:
 
-```text
------BEGIN PRIVATE KEY-----
-```
+  ```text
+  -----BEGIN PRIVATE KEY-----
+  ```
 
-or:
+  or:
 
-```text
------BEGIN RSA PRIVATE KEY-----
-```
+  ```text
+  -----BEGIN RSA PRIVATE KEY-----
+  ```
 
 Files with `.crt` extensions can already be PEM-encoded. No conversion is necessary if they contain the PEM headers.
+
+##
 
 ### Step 3: Verify the Private Key and Server Certificate
 
 Confirm that the private key matches the server certificate.
 
-Extract and calculate the server certificate public-key hash:
+- Extract and calculate the server certificate public-key hash:
 
-```bash
-openssl x509 -in STAR_yourdomain_com.crt -pubkey -noout | openssl sha256
-```
+  ```bash
+  openssl x509 -in STAR_yourdomain_com.crt -pubkey -noout | openssl sha256
+  ```
 
-Extract and calculate the private key public-key hash:
+- Extract and calculate the private key public-key hash:
 
-```bash
-openssl pkey -in yourdomain.key -pubout | openssl sha256
-```
+  ```bash
+  openssl pkey -in yourdomain.key -pubout | openssl sha256
+  ```
 
 **Verification:**
 
-Both SHA256 hashes must match.
+1. Both SHA256 hashes must match.
+2. If the hashes do not match, do not proceed with PEM generation.
 
-If the hashes do not match, do not proceed with PEM generation.
+##
 
 ### Step 4: Prepare the Certificate Chain
 
-Create a separate file containing the intermediate CA certificates in the correct issuer order.
+Create a **separate** file containing the **intermediate CA** certificates in the correct issuer order.
 
-For the supplied certificate package:
+- For the supplied certificate package:
 
-```bash
-cat SectigoPublicServerAuthenticationCADVR36.crt \
-SectigoPublicServerAuthenticationRootR46_USERTrust.crt \
-> intermediate-chain.pem
-```
+  ```bash
+  cat SectigoPublicServerAuthenticationCADVR36.crt \
+  SectigoPublicServerAuthenticationRootR46_USERTrust.crt \
+  > intermediate-chain.pem
+  ```
 
-Note: Include the R46 certificate only if it is part of the verified chain. The self-signed USERTrust root certificate is normally not required in the HAProxy served chain.
+> [!NOTE]
+>Include the R46 certificate only if it is part of the verified chain. The self-signed USERTrust root certificate is normally not required in the HAProxy served chain.
+
+##
 
 ### Step 5: Generate the Combined HAProxy PEM File
 
-Combine the server certificate, private key, and intermediate CA chain into a single PEM file.
+**Without Root CA:**
 
-```bash
-cat STAR_yourdomain_com.crt \
-yourdomain.key \
-intermediate-chain.pem \
-> yourdomain_haproxy.pem
-```
+- Combine the **server certificate**, **private key**, and **intermediate CA chain** into a single PEM file.
 
-The generated file is:
+  ```bash
+  cat STAR_yourdomain_com.crt \
+  yourdomain.key \
+  intermediate-chain.pem \
+  > yourdomain_haproxy.pem
+  ```
 
-```text
-yourdomain_haproxy.pem
-```
+- The generated file is:
 
-**PEM file structure:**
+  ```text
+  yourdomain_haproxy.pem
+  ```
 
-```text
------BEGIN CERTIFICATE-----
-Server Certificate
------END CERTIFICATE-----
+- PEM file structure:
 
------BEGIN PRIVATE KEY-----
-Private Key
------END PRIVATE KEY-----
+  ```text
+  -----BEGIN CERTIFICATE-----
+  Server Certificate
+  -----END CERTIFICATE-----
 
------BEGIN CERTIFICATE-----
-Intermediate CA Certificate
------END CERTIFICATE-----
+  -----BEGIN PRIVATE KEY-----
+  Private Key
+  -----END PRIVATE KEY-----
 
------BEGIN CERTIFICATE-----
-Additional CA Certificate (if required)
------END CERTIFICATE-----
-```
+  -----BEGIN CERTIFICATE-----
+  Intermediate CA Certificate
+  -----END CERTIFICATE-----
+
+  -----BEGIN CERTIFICATE-----
+  Additional CA Certificate (if required)
+  -----END CERTIFICATE-----
+  ```
+
+**With Root CA**:
+
+If the self-signed **USERTrust root certificate** is also need to add, then combine the **server certificate**, **private key**, **intermediate CA chain** and **root ca** into a single PEM file
+  
+- follow this update.
+
+  ```bash
+  cat STAR_yourdomain_com.crt \
+      yourdomain.key \
+      intermediate-chain.pem \
+      USERTrustRSACertificationAuthority.crt \
+      > yourdomain_haproxy.pem
+  ```
+
+- PEM file structure:
+
+  ```text
+  -----BEGIN CERTIFICATE-----
+  Server Certificate
+  -----END CERTIFICATE-----
+
+  -----BEGIN PRIVATE KEY-----
+  Private Key
+  -----END PRIVATE KEY-----
+
+  -----BEGIN CERTIFICATE-----
+  Intermediate CA Certificate
+  -----END CERTIFICATE-----
+
+  -----BEGIN CERTIFICATE-----
+  Additional CA Certificate (if required)
+  -----END CERTIFICATE-----
+
+  -----BEGIN CERTIFICATE-----
+  Root CA Certificate (if required)
+  -----END CERTIFICATE-----
+  ```
+
+##
 
 ### Step 6: Verify the Generated PEM File
 
-- Identify all certificates
+- **Identify all certificates**
     
-    ```bash
-    openssl crl2pkcs7 -nocrl -certfile yourdomain_haproxy.pem | openssl pkcs7 -print_certs -noout
-    ```
+  ```bash
+  openssl crl2pkcs7 -nocrl -certfile yourdomain_haproxy.pem | openssl pkcs7 -print_certs -noout
+  ```
     
-    Check that the certificates appear in this order:
-    1. Domain certificate (STAR_yourdomain_com)
-    2. Intermediate CA certificate
-    3. Any additional intermediate CA certificates
-    4. Root CA (USERTrustRSACertificationAuthority)
+  Check that the certificates appear in this order:
+  1. Domain certificate (STAR_yourdomain_com)
+  2. Intermediate CA certificate
+  3. Any additional intermediate CA certificates
+  4. Root CA (USERTrustRSACertificationAuthority)
 
-- Check the certificate and private-key entries:
+- **Check the certificate and private-key entries:**
     
-    ```bash
-    grep -n "BEGIN" yourdomain_haproxy.pem
-    ```
+  ```bash
+  grep -n "BEGIN" yourdomain_haproxy.pem
+  ```
     
-    Expected entries should include:
-    
-    - Server certificate
-    - Private key
-    - Intermediate CA certificate(s)
+  Expected entries should include:
+  
+  - Server certificate
+  - Private key
+  - Intermediate CA certificate(s)
 
 - Verify that OpenSSL can read the server certificate from the generated PEM:
 
-    ```bash
-    openssl x509 -in yourdomain_haproxy.pem -noout -subject -issuer -dates
-    ```
+  ```bash
+  openssl x509 -in yourdomain_haproxy.pem -noout -subject -issuer -dates
+  ```
 
 - Verify the private key:
     
-    ```bash
-    openssl pkey -in yourdomain_haproxy.pem -check -noout
-    ```
+  ```bash
+  openssl pkey -in yourdomain_haproxy.pem -check -noout
+  ```
+
+##
 
 ### Step 7: Verify the Certificate Chain
 
-Verify the certificate chain using the USERTrust root as the trust anchor.
+- Verify the certificate chain using the USERTrust root as the trust anchor.
 
-```bash
-openssl verify \
--CAfile USERTrustRSACertificationAuthority.crt \
--untrusted intermediate-chain.pem \
-STAR_yourdomain_com.crt
-```
+  ```bash
+  openssl verify \
+  -CAfile USERTrustRSACertificationAuthority.crt \
+  -untrusted intermediate-chain.pem \
+  STAR_yourdomain_com.crt
+  ```
 
-Expected output:
+  Expected output:
 
-```text
-STAR_mynagad_com.crt: OK
-```
+  ```text
+  STAR_mynagad_com.crt: OK
+  ```
 
 If verification fails, inspect the Subject and Issuer fields of the CA certificates and confirm the correct certificate chain with Sectigo.
 
+##
+
 ### Step 8: Set Appropriate File Permissions
 
-Protect the generated PEM file because it contains the private key.
+- Protect the generated PEM file because it contains the private key.
 
-```bash
-chmod 600 yourdomain_haproxy.pem
-```
+  ```bash
+  chmod 600 yourdomain_haproxy.pem
+  ```
+
+##
 
 ### Step 9: Deploy the PEM File to HAProxy
 
 Copy the generated PEM file to the HAProxy certificate directory.
 
-Example:
+- Example:
 
-```bash
-mkdir -p /etc/haproxy/certs
-```
+  ```bash
+  mkdir -p /etc/haproxy/certs
+  ```
 
-Copy the file:
+- Copy the file:
 
-```bash
-cp yourdomain_haproxy.pem /etc/haproxy/certs/
-```
+  ```bash
+  cp yourdomain_haproxy.pem /etc/haproxy/certs/
+  ```
 
 Set ownership and permissions according to the HAProxy service account and deployment security policy.
+
+---
 
 ## 4. HAProxy Configuration
 
 Configure the HAProxy frontend to use the generated PEM file.
 
-Example:
+- Example:
 
-```haproxy
-frontend https_frontend
-    bind *:443 ssl crt /etc/haproxy/certs/yourdomain_haproxy.pem
-    mode http
-    default_backend application_backend
-```
+  ```haproxy
+  frontend https_frontend
+      bind *:443 ssl crt /etc/haproxy/certs/yourdomain_haproxy.pem
+      mode http
+      default_backend application_backend
+  ```
 
 The `crt` parameter specifies the combined PEM certificate file.
+
+---
 
 ## 5. Verification and Service Reload
 
 - Before applying the configuration, validate the HAProxy configuration.
     
-    ```bash
-    haproxy -c -f /etc/haproxy/haproxy.cfg
-    ```
-    
-    Expected output:
-    
-    ```text
-    Configuration file is valid
-    ```
+  ```bash
+  haproxy -c -f /etc/haproxy/haproxy.cfg
+  ```
+  
+  Expected output:
+  
+  ```text
+  Configuration file is valid
+  ```
 
-If the configuration is valid, reload HAProxy using the appropriate service-management procedure.
+  > If the configuration is valid, reload HAProxy using the appropriate service-management procedure.
 
 - For systemd-based systems:
 
