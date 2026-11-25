@@ -146,29 +146,41 @@ Additional CA Certificate (if required)
 
 ### Step 6: Verify the Generated PEM File
 
-Check the certificate and private-key entries:
+- Identify all certificates
+    
+    ```bash
+    openssl crl2pkcs7 -nocrl -certfile yourdomain_haproxy.pem | openssl pkcs7 -print_certs -noout
+    ```
+    
+    Check that the certificates appear in this order:
+    1. Domain certificate (STAR_yourdomain_com)
+    2. Intermediate CA certificate
+    3. Any additional intermediate CA certificates
+    4. Root CA (USERTrustRSACertificationAuthority)
 
-```bash
-grep -n "BEGIN" yourdomain_haproxy.pem
-```
+- Check the certificate and private-key entries:
+    
+    ```bash
+    grep -n "BEGIN" yourdomain_haproxy.pem
+    ```
+    
+    Expected entries should include:
+    
+    - Server certificate
+    - Private key
+    - Intermediate CA certificate(s)
 
-Expected entries should include:
+- Verify that OpenSSL can read the server certificate from the generated PEM:
 
-- Server certificate
-- Private key
-- Intermediate CA certificate(s)
+    ```bash
+    openssl x509 -in yourdomain_haproxy.pem -noout -subject -issuer -dates
+    ```
 
-Verify that OpenSSL can read the server certificate from the generated PEM:
-
-```bash
-openssl x509 -in yourdomain_haproxy.pem -noout -subject -issuer -dates
-```
-
-Verify the private key:
-
-```bash
-openssl pkey -in yourdomain_haproxy.pem -check -noout
-```
+- Verify the private key:
+    
+    ```bash
+    openssl pkey -in yourdomain_haproxy.pem -check -noout
+    ```
 
 ### Step 7: Verify the Certificate Chain
 
@@ -232,42 +244,42 @@ The `crt` parameter specifies the combined PEM certificate file.
 
 ## 5. Verification and Service Reload
 
-Before applying the configuration, validate the HAProxy configuration.
-
-```bash
-haproxy -c -f /etc/haproxy/haproxy.cfg
-```
-
-Expected output:
-
-```text
-Configuration file is valid
-```
+- Before applying the configuration, validate the HAProxy configuration.
+    
+    ```bash
+    haproxy -c -f /etc/haproxy/haproxy.cfg
+    ```
+    
+    Expected output:
+    
+    ```text
+    Configuration file is valid
+    ```
 
 If the configuration is valid, reload HAProxy using the appropriate service-management procedure.
 
-For systemd-based systems:
+- For systemd-based systems:
 
-```bash
-systemctl reload haproxy
-```
+    ```bash
+    systemctl reload haproxy
+    ```
 
-Check service status:
+- Check service status:
+    
+    ```bash
+    systemctl status haproxy
+    ```
 
-```bash
-systemctl status haproxy
-```
+- Verify the deployed certificate:
 
-Verify the deployed certificate:
+    ```bash
+    openssl s_client \
+    -connect localhost:443 \
+    -servername your-hostname.yourdomain.com \
+    -showcerts
+    ```
 
-```bash
-openssl s_client \
--connect localhost:443 \
--servername your-hostname.yourdomain.com \
--showcerts
-```
-
-Replace `your-hostname.yourdomain.com` with the actual hostname configured on HAProxy.
+> Replace `your-hostname.yourdomain.com` with the actual hostname configured on HAProxy.
 
 Check the certificate subject, issuer, and expiry date to confirm that the expected certificate is being served.
 
